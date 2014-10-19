@@ -3,8 +3,6 @@ var balls = [];
 
 function setup() {
 
-  loaderObj.style.display = "none";
-  cl.hide();
   
   createCanvas(windowWidth,windowHeight);
 
