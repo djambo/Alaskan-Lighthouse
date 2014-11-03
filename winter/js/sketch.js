@@ -1,6 +1,7 @@
+// if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
 var stats;
 var camera, controls, scene, renderer;
-
 
 var dirLight, hemiLight;
 
@@ -13,10 +14,6 @@ var gravity = 1;
 var isWireframe = false;
 
 var seaGeometry;
-var treeGroups = [];
-
-// var treeGroups = [];
-
 
 var yNoise = 0.0;
 
@@ -28,15 +25,19 @@ var mountainHeightmap = new Image();
 var cartoonTrees = new THREE.Object3D();
 var lighthouseContainer = new THREE.Object3D();
 
-function preload() {
 
-	islandHeightmap.src = "images/heightmap5.jpg";
-	mountainHeightmap.src = "images/heightmap_mountains2.png";
+init();
+animate();
+
+function init() {
+
+	islandHeightmap.src = "images/heightmap_island.jpg";
+	mountainHeightmap.src = "images/heightmap_mountains.png";
 
 
 	var manager = new THREE.LoadingManager();
 	loader = new THREE.OBJLoader( manager );
-	loader.load( 'obj/cartoonTree.obj', function ( tree ) {
+	loader.load( 'models/cartoonTree.obj', function ( tree ) {
 
 
 		tree.traverse( function ( child ) {
@@ -45,13 +46,13 @@ function preload() {
 			}
 		} );
 
-			for ( var i = 0; i < 200; i ++ ) {
+			for ( var i = 0; i < 300; i ++ ) {
 			    var mesh = tree.clone();
 			    var scaleVal = Math.random() * (1 - 0.5) + 0.5;
-			    mesh.position.set( Math.random() * 140 -70, Math.random() * 10 - 10 , Math.random() * 140 - 80 );
+			    mesh.position.set( Math.random() * 200 -80, Math.random() * 10 - 10 , Math.random() * 300 -15 );
 
 			    // mesh.position.set( Math.random() * 8000 - 4000, Math.random() * 200 - 100, Math.random() * 8000 - 4000 );
-			    // mesh.rotation.x = radians(-20);
+			    mesh.rotation.z = -Math.PI/9;
 			    mesh.scale.set(scaleVal,scaleVal,scaleVal);
 				cartoonTrees.add(mesh);
 
@@ -59,27 +60,12 @@ function preload() {
 	});
 
 
-
-	loader.load( 'obj/lightHouse.obj', function ( lighthouse ) {
-
-
-		lighthouse.traverse( function ( child ) {
-			if ( child instanceof THREE.Mesh ) {
-           		child.material.color.setRGB (255/255, 60/255, 68/255);
-			}
-		} );
-		
-		// mesh.scale.set(scaleVal,scaleVal,scaleVal);
-		lighthouseContainer.add(lighthouse);
-
+	var loader = new THREE.ObjectLoader();
+	loader.load("models/lighthouse.js",function ( lighthouse ) {
+	  	lighthouseContainer.add( lighthouse );
 	});
-}
 
-function setup() {
-	noCanvas();
-
-
- 	stats = new Stats();
+	stats = new Stats();
 	stats.setMode(0); // 0: fps, 1: ms
 
 	stats.domElement.style.position = 'absolute';
@@ -92,27 +78,30 @@ function setup() {
 
 
 	renderer = new THREE.WebGLRenderer();
-	renderer.setSize( windowWidth, windowHeight );
+	renderer.setSize( window.innerWidth, window.innerHeight );
 	document.body.appendChild( renderer.domElement );
 
 
-	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 100, 7500 );
+	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 100, 14500 );
 
+	camera.position.y = 400;
+
+	camera.position.z = 1200;
 
 	//TRACKBALL CONTROLS
-	// controls = new THREE.TrackballControls( camera);
+	controls = new THREE.TrackballControls( camera);
 
-	// controls.rotateSpeed = 1.0;
-	// controls.zoomSpeed = 1.2;
-	// controls.panSpeed = 0.8;
+	controls.rotateSpeed = 1.0;
+	controls.zoomSpeed = 1.2;
+	controls.panSpeed = 0.8;
 
-	// controls.noZoom = false;
-	// controls.noPan = true;
+	controls.noZoom = false;
+	controls.noPan = true;
 
-	// controls.staticMoving = true;
-	// controls.dynamicDampingFactor = 0.3;
+	controls.staticMoving = false;
+	controls.dynamicDampingFactor = 0.3;
 
-	// controls.keys = [ 65, 83, 68 ];
+	controls.keys = [ 65, 83, 68 ];
 
 
 	scene = new THREE.Scene();
@@ -122,20 +111,20 @@ function setup() {
 	// spaceshipPivot.add(camera);
 
 	scene.add(lighthouseContainer);	
-	lighthouseContainer.position.y = 320;
+	lighthouseContainer.position.y = 420;
 	lighthouseContainer.position.x = 160;
 	lighthouseContainer.position.z = 50;
 
 
 
 
-	cartoonTrees.rotation.x = radians(0);
-	cartoonTrees.rotation.y = radians(-20);
+	cartoonTrees.rotation.z = Math.PI/10;
+	cartoonTrees.rotation.y = -Math.PI/3;
 
 
-	cartoonTrees.position.x = -40;
-	cartoonTrees.position.y = 264;
-	cartoonTrees.position.z = 00;
+	cartoonTrees.position.x = 100;
+	cartoonTrees.position.y = 240;
+	cartoonTrees.position.z = -200;
 
 
 
@@ -144,14 +133,14 @@ function setup() {
 
 	// LIGHT
 	var light = new THREE.SpotLight(0x999999, 1);
-     light.castShadow = true;
-     light.shadowDarkness = .3;
-     light.position.set(0, 530, 0);
-     scene.add(light);
+    	light.castShadow = true;
+    	light.shadowDarkness = .3;
+    	light.position.set(0, 530, 0);
+    	scene.add(light);
 
-     var light = new THREE.PointLight(0x999999, .6);
-     light.position.set(500, 400, 0);
-     scene.add(light);
+    var light = new THREE.PointLight(0x999999, .6);
+    	light.position.set(500, 400, 0);
+    	scene.add(light);
 
   
 
@@ -177,7 +166,7 @@ function setup() {
 
 	scene.fog.color.copy( uniforms.bottomColor.value );
 
-	var skyGeo = new THREE.SphereGeometry( 6000, 32, 15 );
+	var skyGeo = new THREE.SphereGeometry( 10000, 32, 15 );
 	var skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
 
 	var sky = new THREE.Mesh( skyGeo, skyMat );
@@ -252,7 +241,6 @@ function setup() {
 
 	    scene.add(mountainMesh);
 
-
 		//GENERATING MOUNTAINS SNOW
 	  
 	    //get height data from img
@@ -303,7 +291,7 @@ function setup() {
 	    var data = getHeightData(islandHeightmap,0.15);
 	  
 	    // plane
-	    var groundGeometry = new THREE.PlaneGeometry(800,800,31,31);
+	    var groundGeometry = new THREE.PlaneGeometry(900,900,31,31);
 		var colorBrown = new THREE.Color("rgb(88,66,43)");
 	    var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
 
@@ -333,7 +321,7 @@ function setup() {
 	    var data = getHeightData(islandHeightmap,0.18);
 	  
 	    // plane
-	    var groundGeometry2 = new THREE.PlaneGeometry(660,660,31,31);
+	    var groundGeometry2 = new THREE.PlaneGeometry(760,760,31,31);
 	    var colorWhite = new THREE.Color( 1, 1, 1 );
 	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
 
@@ -370,7 +358,7 @@ function setup() {
 
 
 	//SEA
-	seaGeometry = new THREE.PlaneGeometry(10000,10000,150,150);
+	seaGeometry = new THREE.PlaneGeometry(10000,10000,50,50);
 	var colorBlue = new THREE.Color( "rgb(0,178,238)");
 	// var seaTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
 
@@ -463,82 +451,79 @@ function setup() {
 
 }
 
-function draw() {
 
-  	var seaNoise = noise(yNoise) *1;
+function animate() {
 
-	var myo = Myo.create(0);
-
-	myo.on('orientation', function(rotation){
-	
-		var quaternion = new THREE.Quaternion();
-            quaternion.x = rotation.y;
-            quaternion.y = rotation.z;
-            quaternion.z = -rotation.x;
-            quaternion.w = rotation.w;
-
-            if(!window.baseRotation) {
-                window.baseRotation = quaternion.clone();
-                window.baseRotation = window.baseRotation.conjugate();
-            }
-
-            quaternion.multiply(baseRotation);
-            quaternion.normalize();
-            quaternion.x = -quaternion.x;
-
-            var initialRotation = new THREE.Quaternion();
-			initialRotation.setFromAxisAngle( new THREE.Vector3( 0, 1, 0 ), Math.PI);
-            
-            quaternion.multiply(initialRotation);
-
-            // camera.setRotationFromQuaternion(quaternion);
+	requestAnimationFrame( animate );
 
 
-            // spaceshipPivot.setRotationFromQuaternion(quaternion);
-	}) 
+	// var myo = Myo.create(0);
+
+	// myo.on('orientation', function(rotation){
+	// 
+		// var quaternion = new THREE.Quaternion();
+	        // quaternion.x = rotation.y;
+	 // quaternion.y = rotation.z;
+	 // quaternion.z = -rotation.x;
+	 // quaternion.w = rotation.w;
+
+	 // if(!window.baseRotation) {
+	     // window.baseRotation = quaternion.clone();
+	     // window.baseRotation = window.baseRotation.conjugate();
+	 // }
+
+	 // quaternion.multiply(baseRotation);
+	 // quaternion.normalize();
+	 // quaternion.x = -quaternion.x;
+
+	        // var initialRotation = new THREE.Quaternion();
+			// initialRotation.setFromAxisAngle( new THREE.Vector3( 0, 1, 0 ), Math.PI);
+	     // 
+	        // quaternion.multiply(initialRotation);
+
+	        // camera.setRotationFromQuaternion(quaternion);
+	// }) 
 
 
+	// myo.on('fingers_spread', function(pose_name, edge){
+	// 	// spaceShip.scale.set(1.2,1.2,1.2);
+	// }) 
 
-	myo.on('fingers_spread', function(pose_name, edge){
-		spaceShip.scale.set(1.2,1.2,1.2);
-	}) 
+	// myo.on('rest', function(pose_name, edge){
+	// 	spaceShip.scale.set(1,1,1);
+	// }) 
 
-	myo.on('rest', function(pose_name, edge){
-		spaceShip.scale.set(1,1,1);
-	}) 
+	// myo.on('fist', function(pose_name, edge){
+	// 	// spaceShip.scale.set(.5,.5,.5);
+	// }) 
 
-	myo.on('fist', function(pose_name, edge){
-		spaceShip.scale.set(.5,.5,.5);
-	}) 
-
-	theta = radians(cameraAngle);
+	theta = cameraAngle * Math.PI / 180;
 	var x = camera.position.x;
 	var z = camera.position.z;
 
 
-	camera.position.x = 1200*Math.cos(theta*4) + 0;
+	camera.position.x = 800*Math.cos(theta*4) + 0;
 	camera.position.y = 400*Math.sin(theta*2) + 600;
- 	camera.position.z = 1200*Math.sin(theta*4) + 0;
+ 	camera.position.z = 800*Math.sin(theta*4) + 0;
 
 	camera.lookAt( lighthouseContainer.position );
 
 
 
-	for ( var i = 0; i<seaGeometry.vertices.length; i++ ) {
-	    // seaMesh.geometry.dynamic = true;
-	    seaMesh.geometry.vertices[i].z =  seaMesh.geometry.vertices[i].z + Math.sin(i/seaNoise);
+	for ( var i = 0; i<seaGeometry.vertices.length; i+=7) {
+	    seaMesh.geometry.dynamic = true;
+	    
+	    // seaMesh.geometry.vertices[i].z =  seaMesh.geometry.vertices[i].z + sinWave;
+	    var sinWave;
 
-	    if (seaMesh.geometry.vertices[i].z > 2) {
-			seaMesh.geometry.vertices[i].z = 0;
-		}
-	     // if(seaMesh.geometry.vertices[i].z>1){
-	     // 	seaMesh.geometry.vertices[i].z = 0;
-	     // }
+	    	// this controls the height
 
-     	// if(seaMesh.geometry.vertices[i].z<1 ){
-	     // 	seaMesh.geometry.vertices[i].z = 1;
-	     // }
+	    	seaMesh.geometry.vertices[i].z  = sinWave * i/40; 
+	    	seaMesh.geometry.vertices[i+3].z = sinWave * -i/40; 
 
+			// this controls the speed of the wave going up and down
+	    	sinWave= Math.sin(gravity/30);
+		 	
 	    seaMesh.geometry.verticesNeedUpdate = true;
 	}
 
@@ -546,11 +531,15 @@ function draw() {
 
 
 	cameraAngle = cameraAngle + 0.05;
-	gravity++;
-	time --;
-	yNoise++;
 
-    stats.end();
+	if(gravity) {
+
+		gravity++;
+		time --;
+		yNoise++;
+	}
+
+    // stats.end();
 
 
 	var delta = clock.getDelta(),
@@ -559,27 +548,29 @@ function draw() {
 
 
     // controls.update();    
-    render();
+
+	renderer.render( scene, camera );
+	stats.update();
 }
 
 function render() {
+
+	var time = Date.now() * 0.001;
+
 	renderer.render( scene, camera );
-	// stats.update();
-}
 
-function mousePressed() {
-  // Using the third-party library to call play() on the buzz object
-	// controls.addEventListener( 'change', render );
 }
-
 
 function rand( v ) {
 	return (v * (Math.random() - 0.5));
 }
 
+Math.radians = function(degrees) {
+  return degrees * Math.PI / 180;
+};
 
 window.onresize = function() {
-	camera.aspect = windowWidth / windowHeight;
+	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
-	renderer.setSize( windowWidth, windowHeight );
+	renderer.setSize( window.innerWidth, window.innerHeight );
 }

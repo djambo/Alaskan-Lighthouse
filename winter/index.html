@@ -1,30 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<title>p5.js Tween.js Example</title>
-	<script type="text/javascript" src="./libraries/three.min.js"></script>
-	<script type="text/javascript" src="./libraries/stats.min.js"></script>
-	<script type="text/javascript" src="./libraries/dat.gui.min.js"></script>
-	<!--<script type="text/javascript" src="js/snow.js"></script>-->
-
-	<script type="text/javascript" src="./libraries/p5.js"></script>
-
-	<script type="text/javascript" src="./libraries/TrackballControls.js"></script>
-	<script src="js/loaders/OBJLoader.js"></script>
-
-
-	<script type="text/javascript" src="js/sketch.js"></script>
-
-
-	<!--<script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'></script>-->
-	<script src='./libraries/myo.js'></script>
-	<!--<script src='./experimental/myo.experimental.js'></script>-->
     <style> 
   		body {padding: 0; margin: 0; overflow: hidden;} 
   		canvas{ padding:0; }
   	</style>
 </head>
 <body>
+	<script type="text/javascript" src="./libraries/three.min.js"></script>
+	<script type="text/javascript" src="./libraries/stats.min.js"></script>
+	<script type="text/javascript" src="./libraries/dat.gui.min.js"></script>
+	<script type="text/javascript" src="./libraries/TrackballControls.js"></script>
+	<script type="text/javascript" src="js/Detector.js"></script>
+	<script src="js/loaders/OBJLoader.js"></script>
+	<script src="js/loaders/ColladaLoader.js"></script>
+
+	<!--<script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'></script>
+	<script src='./libraries/myo.js'></script>-->
+	<!--<script src='./experimental/myo.experimental.js'></script>-->
 	<!-- SHADER TO GENERATE SKYDOME-->
 	<script type="x-shader/x-vertex" id="vertexShader">
 
@@ -95,5 +90,7 @@
 				gl_FragColor = texColor * vec4( color, opacity );
 			}
 		</script>
+			<script type="text/javascript" src="js/sketch.js"></script>
+
 </body>
 </html>
