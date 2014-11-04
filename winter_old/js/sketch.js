@@ -1,9 +1,5 @@
 // if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-var weatherUrl = 'Http://api.openweathermap.org/data/2.5/weather?q=Juneau,Ak&APPID=2404c9149ffe850501ae4a9754ced4f2';
-
-var weatherData = {};
-
 var stats;
 var camera, controls, scene, renderer;
 
@@ -30,39 +26,38 @@ var cartoonTrees = new THREE.Object3D();
 var lighthouseContainer = new THREE.Object3D();
 
 
-updateWeather();
-
+init();
+animate();
 
 function init() {
 
 	islandHeightmap.src = "images/heightmap_island.jpg";
 	mountainHeightmap.src = "images/heightmap_mountains.png";
 
-	// var manager = new THREE.LoadingManager();
-	// loader = new THREE.OBJLoader( manager );
-	// loader.load( 'models/cartoonTree.obj', function ( tree ) {
+
+	var manager = new THREE.LoadingManager();
+	loader = new THREE.OBJLoader( manager );
+	loader.load( 'models/cartoonTree.obj', function ( tree ) {
 
 
-	// 	tree.traverse( function ( child ) {
-	// 		if ( child instanceof THREE.Mesh ) {
- //           		child.material.color.setRGB (122/255, 139/255, 68/255);
-	// 		}
-	// 	} );
+		tree.traverse( function ( child ) {
+			if ( child instanceof THREE.Mesh ) {
+           		child.material.color.setRGB (122/255, 139/255, 68/255);
+			}
+		} );
 
-	// 		for ( var i = 0; i < 300; i ++ ) {
-	// 		    var mesh = tree.clone();
-	// 		    var scaleVal = Math.random() * (1 - 0.5) + 0.5;
-	// 		    mesh.position.set( Math.random() * 200 -80, Math.random() * 10 - 10 , Math.random() * 300 -15 );
+			for ( var i = 0; i < 300; i ++ ) {
+			    var mesh = tree.clone();
+			    var scaleVal = Math.random() * (1 - 0.5) + 0.5;
+			    mesh.position.set( Math.random() * 200 -80, Math.random() * 10 - 10 , Math.random() * 300 -15 );
 
-	// 		    // mesh.position.set( Math.random() * 8000 - 4000, Math.random() * 200 - 100, Math.random() * 8000 - 4000 );
-	// 		    mesh.rotation.z = -Math.PI/9;
-	// 		    mesh.scale.set(scaleVal,scaleVal,scaleVal);
-	// 			cartoonTrees.add(mesh);
+			    // mesh.position.set( Math.random() * 8000 - 4000, Math.random() * 200 - 100, Math.random() * 8000 - 4000 );
+			    mesh.rotation.z = -Math.PI/9;
+			    mesh.scale.set(scaleVal,scaleVal,scaleVal);
+				cartoonTrees.add(mesh);
 
-	// 		}
-	// });
-
-
+			}
+	});
 
 
 	var loader = new THREE.ObjectLoader();
@@ -82,7 +77,7 @@ function init() {
 	stats.begin();
 
 
-	renderer = new THREE.WebGLRenderer({antialias:true});
+	renderer = new THREE.WebGLRenderer();
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	document.body.appendChild( renderer.domElement );
 
@@ -219,6 +214,7 @@ function init() {
 	  
 	    // plane
 	    var mountainGeometry = new THREE.PlaneGeometry(13000,13000,31,31);
+	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
 		var colorBrown = new THREE.Color("rgb(73,49,28)");
 
        	var mountainMaterial = new THREE.MeshPhongMaterial({
@@ -252,6 +248,7 @@ function init() {
 	  
 	    // plane
 	    var mountainGeometry2 = new THREE.PlaneGeometry(13000,13000,31,31);
+	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
 		var colorWhite = new THREE.Color("rgb(255,255,255)");
 
        	var mountainMaterial2 = new THREE.MeshPhongMaterial({
@@ -296,6 +293,8 @@ function init() {
 	    // plane
 	    var groundGeometry = new THREE.PlaneGeometry(900,900,31,31);
 		var colorBrown = new THREE.Color("rgb(88,66,43)");
+	    var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
+
        	var groundMaterial = new THREE.MeshPhongMaterial({
        		shading: THREE.FlatShading,
        	    wireframe: false,
@@ -319,7 +318,7 @@ function init() {
 	    scene.add(groundMesh);
 
 
-	    var data = getHeightData(islandHeightmap,0.14);
+	    var data = getHeightData(islandHeightmap,0.18);
 	  
 	    // plane
 	    var groundGeometry2 = new THREE.PlaneGeometry(760,760,31,31);
@@ -329,8 +328,7 @@ function init() {
        	var groundMaterial2 = new THREE.MeshPhongMaterial({
        		shading: THREE.FlatShading,
        	    wireframe: false,
-       	    color: colorWhite,
-       	    depthTest: true
+       	    color: colorWhite
        	    // map: groundTexture
        	    // emissive: 0xffffff
        	});
@@ -346,7 +344,7 @@ function init() {
 	  
 		groundMesh2.receiveShadow = true;
 
-		groundMesh2.position.y = 0;
+		groundMesh2.position.y = 60;
 		groundMesh2.position.z = -10;
 
 	 
@@ -458,6 +456,7 @@ function animate() {
 
 	requestAnimationFrame( animate );
 
+
 	// var myo = Myo.create(0);
 
 	// myo.on('orientation', function(rotation){
@@ -519,8 +518,8 @@ function animate() {
 
 	    	// this controls the height
 
-	    	seaMesh.geometry.vertices[i].z  = sinWave * i*weatherData.wind.speed/400; 
-	    	seaMesh.geometry.vertices[i+3].z = sinWave * -i*weatherData.wind.speed/400; 
+	    	seaMesh.geometry.vertices[i].z  = sinWave * i/40; 
+	    	seaMesh.geometry.vertices[i+3].z = sinWave * -i/40; 
 
 			// this controls the speed of the wave going up and down
 	    	sinWave= Math.sin(gravity/30);
@@ -542,15 +541,11 @@ function animate() {
 
     // stats.end();
 
+
 	var delta = clock.getDelta(),
 		elapsedTime = clock.getElapsedTime();
 		particleSystem.material.uniforms.elapsedTime.value = elapsedTime * 10;
 
-
-	// UPDATES PARAMETERS ONLY IF WEATHER DATA IS STORED
-	if(weatherData.name) {		
-		// console.log(weatherInfo.name);
-	}
 
     // controls.update();    
 
@@ -561,35 +556,10 @@ function animate() {
 function render() {
 
 	var time = Date.now() * 0.001;
+
 	renderer.render( scene, camera );
+
 }
-
-function updateWeather() {
-
-	$.ajax({
-
-	    type: 'GET',
-	    url: weatherUrl,
-	    async: false,
-	    contentType: "application/json",
-	    dataType: 'jsonp',
-	    success: function(json) {
-			window.weatherData = json;
-	    },
-	    error: function(e) {
-	       console.log(e.message);
-	    }
-	}).done(function() { 
-
-		setTimeout(updateWeather, 600000);
-
-		init();
-		animate();
-
-		$("#overlay").fadeOut( "slow" ).delay(1000);
-	});
-}
-
 
 function rand( v ) {
 	return (v * (Math.random() - 0.5));

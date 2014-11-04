@@ -13,11 +13,11 @@ keyboard interaction (sounds)
 
 
 GIANLUCA:
-XML DATA TO LOAD: see example from p5.js
+
 time (day/night)
 wind
-waves
 precipitation
+
 Lighthouse model
 
 JUNE:
