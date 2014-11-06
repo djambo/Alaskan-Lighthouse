@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<title>p5.js Tween.js Example</title>
+    <style> 
+  		body {padding: 0; margin: 0; overflow: hidden;} 
+  		canvas{ padding:0; }
+  		h6{position: absolute; top: 100px; left: 200px; color: #ffffff; font-family: helvetica,arial; font-weight: 700;
+  			font-size: 40pt;}
+   		div#context{position: absolute; top: 300px; left: 200px; color: #ffffff; font-family: helvetica,arial; font-weight: 100; line-height: 1.7em !important;}
+   		span {font-weight: 700; font-size: 17pt;}
+  		p{font-size: 15pt;}
+  	</style>
+
+			<script>
+			if (window.XMLHttpRequest)
+			  {// code for IE7+, Firefox, Chrome, Opera, Safari
+			  xmlhttp=new XMLHttpRequest();
+			  }
+			else
+			  {// code for IE6, IE5
+			  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+			  }
+			xmlhttp.open("GET","http://api.openweathermap.org/data/2.5/weather?q=Juneau&mode=xml",false);
+			xmlhttp.send();
+			xmlDoc=xmlhttp.responseXML; 
+
+			x = xmlDoc.getElementsByTagName("current");
+			i=0;
+
+			function displayWeather()
+			{
+			// country=(x[i].getElementsByTagName("country")[0].childNodes[0].nodeValue);
+			temperature=(x[i].getElementsByTagName("temperature")[0].getAttribute("value"));
+			humidity=(x[i].getElementsByTagName("humidity")[0].getAttribute("value"));
+			speed=(x[i].getElementsByTagName("speed")[0].getAttribute("value"));
+			// direction=(x[i].getElementsByTagName("direction")[0].getAttribute("value"));
+			clouds=(x[i].getElementsByTagName("clouds")[0].getAttribute("name"));
+			weather=(x[i].getElementsByTagName("weather")[0].getAttribute("value"));
+
+
+			txt= "Temperature  " + "<span>" + temperature + "</span>" +
+				 "<br />Humidity  " + "<span>" + humidity + "</span>" +
+				 "<br />Wind  " + "<span>" + speed + "</span>" +
+				 "<br />Clouds  " + "<span>" + clouds + "</span>" +
+				 "<br />Weather  " + "<span>" + weather + "</span>";
+			document.getElementById("context").innerHTML=txt;
+			}
+			</script>
+
+</head>
+<body onload="displayWeather()">
+
+	<script type="text/javascript" src="./libraries/three.min.js"></script>
+	<script type="text/javascript" src="./libraries/stats.min.js"></script>
+	<script type="text/javascript" src="./libraries/dat.gui.min.js"></script>
+	<script type="text/javascript" src="./libraries/TrackballControls.js"></script>
+	<script type="text/javascript" src="js/Detector.js"></script>
+	<script src="js/loaders/OBJLoader.js"></script>
+	<script src="js/loaders/ColladaLoader.js"></script>
+
+	<!--<script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'></script>
+	<script src='./libraries/myo.js'></script>-->
+	<!--<script src='./experimental/myo.experimental.js'></script>-->
+	<!-- SHADER TO GENERATE SKYDOME-->
+	<script type="x-shader/x-vertex" id="vertexShader">
+
+			varying vec3 vWorldPosition;
+
+			void main() {
+
+				vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
+				vWorldPosition = worldPosition.xyz;
+
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+			}
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="fragmentShader">
+
+			uniform vec3 topColor;
+			uniform vec3 bottomColor;
+			uniform float offset;
+			uniform float exponent;
+
+			varying vec3 vWorldPosition;
+
+			void main() {
+
+				float h = normalize( vWorldPosition + offset ).y;
+				gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );
+
+			}
+		</script>
+
+
+
+		<!-- SHADER TO GENERATE SNOW-->
+		<script type="x-shader/x-vertex" id="snow_vs">
+			uniform float radiusX;
+			uniform float radiusZ;
+			uniform float size;
+			uniform float scale;
+			uniform float height;
+			uniform float elapsedTime;
+			uniform float speedH;
+			uniform float speedV;
+
+			void main() {
+				vec3 pos = position;
+				pos.x += cos((elapsedTime + position.z) * 0.25 * speedH) * radiusX;
+				pos.y = mod(pos.y - elapsedTime * speedV, height);
+				pos.z += sin((elapsedTime + position.x) * 0.25 * speedH) * radiusZ;
+
+				vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
+
+				gl_PointSize = size * ( scale / length( mvPosition.xyz ) );
+
+				gl_Position = projectionMatrix * mvPosition;
+			}
+		</script>
+		
+		<script type="x-shader/x-fragment" id="snow_fs">
+			uniform vec3 color;
+			uniform float opacity;
+			uniform sampler2D texture;
+
+			void main() {
+				vec4 texColor = texture2D( texture, gl_PointCoord );
+				gl_FragColor = texColor * vec4( color, opacity );
+			}
+		</script>
+			<script type="text/javascript" src="js/sketch.js"></script>
+
+<!-- 			<div class="context">
+
+			<h2>Winter</h2>
+			<p>Body Text</p>
+			</div> -->
+			<!--<script>
+			if (window.XMLHttpRequest)
+			  {// code for IE7+, Firefox, Chrome, Opera, Safari
+			  xmlhttp=new XMLHttpRequest();
+			  }
+			else
+			  {// code for IE6, IE5
+			  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+			  }
+			xmlhttp.open("GET","http://api.openweathermap.org/data/2.5/weather?q=Juneau,Ak&APPID=2404c9149ffe850501ae4a9754ced4f2",false);
+			xmlhttp.send();
+			xmlDoc=xmlhttp.responseXML; 
+
+			  
+			  // document.write("<tr><td>");
+			  document.write("<p>");
+			  document.write(getElementsByTagName("name")[0].childNodes[0].nodeValue);
+			  document.write("</p>");
+
+			</script> -->
+
+
+
+			<h6>Juneau</h6>
+			<div id="context">
+			</div>
+
+
+
+
+</body>
+</html>
