@@ -19,12 +19,19 @@ var isWireframe = false;
 
 var seaGeometry;
 
+var lavaShape;
+var lavaColor;
+var lavaFire;
+var lavaGlowColor;
+
 var yNoise = 0.0;
 
 var texture = THREE.ImageUtils.loadTexture( 'images/snowflake.jpg' );
 
 var islandHeightmap = new Image();
 var mountainHeightmap = new Image();
+var volcanoHeightmap = new Image();
+var volcanoGlowHeightmap = new Image();
 
 var cartoonTrees = new THREE.Object3D();
 var lighthouseContainer = new THREE.Object3D();
@@ -40,7 +47,8 @@ function init() {
 
 	islandHeightmap.src = "images/heightmap_island.jpg";
 	mountainHeightmap.src = "images/heightmap_mountains.png";
-
+	volcanoHeightmap.src = "images/heightmap-lava3.jpg";
+	volcanoGlowHeightmap.src = "images/heightmap-lava-glow.jpg";
 	// var manager = new THREE.LoadingManager();
 	// loader = new THREE.OBJLoader( manager );
 	// loader.load( 'models/cartoonTree.obj', function ( tree ) {
@@ -395,6 +403,80 @@ function init() {
 	seaMesh.position.y = 100;
 	seaMesh.rotation.x = Math.PI / 180 * (-90);
 	scene.add(seaMesh);
+
+	volcanoHeightmap.onload = function () {
+
+	    var data = getHeightData(volcanoHeightmap,0.137);
+        //set height of vertices
+
+
+	    var lavaShape = new THREE.PlaneGeometry(400,400,31,31);
+		var lavaColor = new THREE.Color( "rgb(255,45,32)");
+	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
+
+		var lavaMaterial = new THREE.MeshPhongMaterial( { 
+			wireframe: false,
+			shading: THREE.FlatShading,
+			color: lavaColor,
+			specular: 0x0077ff, 
+			shininess: 30,
+			// envMap: refractionCube, 
+	        refractionRatio: 0.5,
+	        opacity: 1,
+	        // transparent: true
+		} );
+
+		lavaMesh = new THREE.Mesh( lavaShape, lavaMaterial );
+
+		lavaMesh.position.y = 60;
+		lavaMesh.position.x = 00;
+		lavaMesh.rotation.x = Math.PI / 180 * (-90);
+		scene.add(lavaMesh);
+
+	    for ( var i = 0; i<lavaShape.vertices.length; i++ ) {
+	         lavaShape.vertices[i].z = data[i];
+	    }
+
+        lavaShape.computeFaceNormals();
+		lavaMesh.receiveShadow = true;
+}
+
+	volcanoGlowHeightmap.onload = function () {
+
+	    var data = getHeightData(volcanoGlowHeightmap,0.131);
+        //set height of vertices
+
+
+	    var lavaFire = new THREE.PlaneGeometry(400,400,31,31);
+		var lavaGlowColor = new THREE.Color( "rgb(252,86,21)");
+	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
+
+		var lavaMaterial = new THREE.MeshPhongMaterial( { 
+			wireframe: false,
+			shading: THREE.FlatShading,
+			color: lavaGlowColor,
+			specular: 0x0077ff, 
+			shininess: 30,
+			// envMap: refractionCube, 
+	        refractionRatio: 0.5,
+	        opacity: 1,
+	        // transparent: true
+		} );
+
+		lavaMesh = new THREE.Mesh( lavaFire, lavaMaterial );
+
+		lavaMesh.position.y = 60;
+		lavaMesh.position.x = 00;
+		lavaMesh.rotation.x = Math.PI / 180 * (-90);
+		scene.add(lavaMesh);
+
+	    for ( var i = 0; i<lavaFire.vertices.length; i++ ) {
+	         lavaFire.vertices[i].z = data[i];
+	    }
+
+        lavaFire.computeFaceNormals();
+		lavaMesh.receiveShadow = true;
+}		
 
 	var numParticles = 20000,
 		snowWidth = 4000,
