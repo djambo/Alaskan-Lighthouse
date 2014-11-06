@@ -29,6 +29,9 @@ var mountainHeightmap = new Image();
 var cartoonTrees = new THREE.Object3D();
 var lighthouseContainer = new THREE.Object3D();
 
+var centralLight;
+var sinWave;
+
 
 updateWeather();
 
@@ -61,8 +64,6 @@ function init() {
 
 	// 		}
 	// });
-
-
 
 
 	var loader = new THREE.ObjectLoader();
@@ -110,51 +111,56 @@ function init() {
 
 
 	scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2( 0x000000, 0.0002 );
+	scene.fog = new THREE.FogExp2( 0xFFFFFF, 0.0002 );
 
-
-	// spaceshipPivot.add(camera);
 
 	scene.add(lighthouseContainer);	
-	lighthouseContainer.position.y = 420;
-	lighthouseContainer.position.x = 160;
+
+	lighthouseContainer.position.y = 250;
+	lighthouseContainer.position.x = 40;
 	lighthouseContainer.position.z = 50;
 
+	lighthouseContainer.rotation.y = 20 * Math.PI / 180;
 
 
+	scene.add(cartoonTrees);
 
 	cartoonTrees.rotation.z = Math.PI/10;
 	cartoonTrees.rotation.y = -Math.PI/3;
-
-
 	cartoonTrees.position.x = 100;
 	cartoonTrees.position.y = 240;
 	cartoonTrees.position.z = -200;
 
 
 
-	scene.add(cartoonTrees);
+
+		centralLight = new THREE.PointLight(0xffff66, 1000, 0);
+    	centralLight.castShadow = true;
+    	centralLight.shadowDarkness = .3;
+    	centralLight.position.set(40, 615, 50);
+		scene.add(new THREE.PointLightHelper(centralLight, 3));
+    	scene.add(centralLight);
 
 
-	// LIGHT
-	var light = new THREE.SpotLight(0x999999, 1);
-    	light.castShadow = true;
-    	light.shadowDarkness = .3;
-    	light.position.set(0, 530, 0);
+	// var bluePoint = new THREE.PointLight(0x003fff, 3, 1500);
+ //    	bluePoint.castShadow = true;
+ //    	bluePoint.shadowDarkness = .9;
+ //    	bluePoint.position.set(40, 615, 50);
+ //    	scene.add(bluePoint);
+
+
+    var light = new THREE.PointLight(0xffffff, 0.1);
+    	light.position.set(400, 400, 0);
     	scene.add(light);
-
-    var light = new THREE.PointLight(0x999999, .6);
-    	light.position.set(500, 400, 0);
-    	scene.add(light);
+		// scene.add(new THREE.PointLightHelper(light, 100));
 
   
 
- 	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.4 );
+ 	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.1 );
 	hemiLight.color.setHSL( 0.6, 1, 0.6 );
 	hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
 	hemiLight.position.set( 0, 500, 0 );
 	scene.add( hemiLight );
-
 
 
 
@@ -164,6 +170,10 @@ function init() {
 	var uniforms = {
 		topColor: 	 { type: "c", value: new THREE.Color( 0x0077ff ) },
 		bottomColor: { type: "c", value: new THREE.Color( 0xffffff ) },
+
+		// topColor: 	 { type: "c", value: new THREE.Color( 0x000000 ) },
+		// bottomColor: { type: "c", value: new THREE.Color( 0x000000 ) },
+
 		offset:		 { type: "f", value: 33 },
 		exponent:	 { type: "f", value: 0.6 }
 	}
@@ -176,7 +186,6 @@ function init() {
 
 	var sky = new THREE.Mesh( skyGeo, skyMat );
 	scene.add( sky );
-
 
 
 	//LOADING HEIGHTMAP
@@ -206,7 +215,7 @@ function init() {
 	        var all = pix[i]+pix[i+1]+pix[i+2];
 	        data[j++] = all/(12*scale);
 	    }
-	     
+
 	    return data;
 	}
 
@@ -259,7 +268,6 @@ function init() {
        	    wireframe: false,
        	    color: colorWhite,
        	    depthTest: true
-
        	    // map: groundTexture
        	    // emissive: 0xffffff
        	});
@@ -273,7 +281,6 @@ function init() {
 
 	    mountainMesh2 = new THREE.Mesh( mountainGeometry2, mountainMaterial2 );
 	  	 
-
 		mountainMesh2.position.y = -1600;
 		mountainMesh2.position.z = -100;
 	 
@@ -322,7 +329,7 @@ function init() {
 	    var data = getHeightData(islandHeightmap,0.14);
 	  
 	    // plane
-	    var groundGeometry2 = new THREE.PlaneGeometry(760,760,31,31);
+	    var groundGeometry2 = new THREE.PlaneGeometry(800,800,31,31);
 	    var colorWhite = new THREE.Color( 1, 1, 1 );
 	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
 
@@ -349,10 +356,8 @@ function init() {
 		groundMesh2.position.y = 0;
 		groundMesh2.position.z = -10;
 
-	 
 	 	// groundMesh2.rotation.y = Math.PI / 180 * (-2);
 	 	// groundMesh2.rotation.z = Math.PI / 180 * (2);
-
 
 		groundMesh2.rotation.x = Math.PI / 180 * (-90);
 	    scene.add(groundMesh2);
@@ -370,10 +375,9 @@ function init() {
 		shading: THREE.FlatShading,
 		color: colorBlue,
 		specular: 0x0077ff, 
-		shininess: 30,
+		shininess: 20,
 		// envMap: refractionCube, 
-        refractionRatio: 0.5,
-        opacity: 0.7,
+        refractionRatio: 0.3
         // transparent: true
 	} );
 
@@ -392,8 +396,6 @@ function init() {
 	seaMesh.rotation.x = Math.PI / 180 * (-90);
 	scene.add(seaMesh);
 
-
-
 	var numParticles = 20000,
 		snowWidth = 4000,
 		snowHeight = 5000,
@@ -404,10 +406,10 @@ function init() {
 			height: 5000,
 			radiusX: 10.5,
 			radiusZ: 10.5,
-			size: 3000,
-			scale: 4.0,
-			opacity: 1,
-			speedH: 1.0,
+			size: window.innerWidth*3,
+			scale: 1.0,
+			opacity: 0.4,
+			speedH: 1.5,
 			speedV: 5.0
 		},
 
@@ -447,10 +449,10 @@ function init() {
 	particleSystem = new THREE.PointCloud( systemGeometry, systemMaterial );
 	particleSystem.position.y = -snowHeight/2;
 
+
 	scene.add( particleSystem );
 
 	clock = new THREE.Clock();
-
 }
 
 
@@ -504,9 +506,8 @@ function animate() {
 
 
 	camera.position.x = 800*Math.cos(theta*4) + 0;
-	camera.position.y = 400*Math.sin(theta*2) + 600;
+	camera.position.y = 400*Math.sin(theta*2) + 800;
  	camera.position.z = 800*Math.sin(theta*4) + 0;
-
 	camera.lookAt( lighthouseContainer.position );
 
 
@@ -515,7 +516,6 @@ function animate() {
 	    seaMesh.geometry.dynamic = true;
 	    
 	    // seaMesh.geometry.vertices[i].z =  seaMesh.geometry.vertices[i].z + sinWave;
-	    var sinWave;
 
 	    	// this controls the height
 
@@ -529,6 +529,11 @@ function animate() {
 	}
 
 	// seaMesh.geometry.computeFaceNormals();
+	sinWave= Math.sin(gravity/50);
+
+
+	centralLight.intensity = 1 + sinWave;
+	centralLight.distance = 300;
 
 
 	cameraAngle = cameraAngle + 0.05;
@@ -581,7 +586,7 @@ function updateWeather() {
 	    }
 	}).done(function() { 
 
-		setTimeout(updateWeather, 600000);
+		// setTimeout(updateWeather, 600000);
 
 		init();
 		animate();
