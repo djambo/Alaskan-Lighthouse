@@ -1,5 +1,9 @@
 // if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+var weatherUrl = 'Http://api.openweathermap.org/data/2.5/weather?q=Juneau,Ak&APPID=2404c9149ffe850501ae4a9754ced4f2';
+
+var weatherData = {};
+
 var stats;
 var camera, controls, scene, renderer;
 
@@ -15,73 +19,52 @@ var isWireframe = false;
 
 var seaGeometry;
 
-var lavaShape;
-var lavaColor;
-var lavaFire;
-var lavaGlowColor;
-
 var yNoise = 0.0;
 
 var texture = THREE.ImageUtils.loadTexture( 'images/snowflake.jpg' );
 
 var islandHeightmap = new Image();
 var mountainHeightmap = new Image();
-var volcanoHeightmap = new Image();
-var volcanoGlowHeightmap = new Image();
 
-var cloud = new THREE.Object3D();
 var cartoonTrees = new THREE.Object3D();
 var lighthouseContainer = new THREE.Object3D();
 
+var centralLight;
+var sinWave;
 
-init();
-animate();
+
+updateWeather();
+
 
 function init() {
 
 	islandHeightmap.src = "images/heightmap_island.jpg";
 	mountainHeightmap.src = "images/heightmap_mountains.png";
-	volcanoHeightmap.src = "images/heightmap-lava3.jpg";
-	volcanoGlowHeightmap.src = "images/heightmap-lava-glow.jpg";
+
+	// var manager = new THREE.LoadingManager();
+	// loader = new THREE.OBJLoader( manager );
+	// loader.load( 'models/cartoonTree.obj', function ( tree ) {
 
 
-	var manager = new THREE.LoadingManager();
-	loader = new THREE.OBJLoader( manager );
-	loader.load( 'models/cartoonTree.obj', function ( tree ) {
+	// 	tree.traverse( function ( child ) {
+	// 		if ( child instanceof THREE.Mesh ) {
+ //           		child.material.color.setRGB (122/255, 139/255, 68/255);
+	// 		}
+	// 	} );
 
+	// 		for ( var i = 0; i < 300; i ++ ) {
+	// 		    var mesh = tree.clone();
+	// 		    var scaleVal = Math.random() * (1 - 0.5) + 0.5;
+	// 		    mesh.position.set( Math.random() * 200 -80, Math.random() * 10 - 10 , Math.random() * 300 -15 );
 
-		tree.traverse( function ( child ) {
-			if ( child instanceof THREE.Mesh ) {
-           		child.material.color.setRGB (122/255, 139/255, 68/255);
-			}
-		} );
+	// 		    // mesh.position.set( Math.random() * 8000 - 4000, Math.random() * 200 - 100, Math.random() * 8000 - 4000 );
+	// 		    mesh.rotation.z = -Math.PI/9;
+	// 		    mesh.scale.set(scaleVal,scaleVal,scaleVal);
+	// 			cartoonTrees.add(mesh);
 
-			for ( var i = 0; i < 300; i ++ ) {
-			    var mesh = tree.clone();
-			    var scaleVal = Math.random() * (1 - 0.5) + 0.5;
-			    mesh.position.set( Math.random() * 200 -80, Math.random() * 10 - 10 , Math.random() * 300 -15 );
+	// 		}
+	// });
 
-			    // mesh.position.set( Math.random() * 8000 - 4000, Math.random() * 200 - 100, Math.random() * 8000 - 4000 );
-			    mesh.rotation.z = -Math.PI/9;
-			    mesh.scale.set(scaleVal,scaleVal,scaleVal);
-				cartoonTrees.add(mesh);
-
-			}
-	});
-
-	//working -- cloud
-	
-	loader = new THREE.OBJLoader( manager );
-	loader.load( 'models/cloud.obj', function ( cloud ) {
-
-			for ( var i = 0; i < 2; i ++ ) {
-			    var mesh = cloud.clone();
-			    // mesh.position.set( Math.random() * 200 -80, Math.random() * 10 - 10 , Math.random() * 300 -15 );
-			    // mesh.rotation.z = -Math.PI/9;
-				cloud.add(mesh);
-
-			}
-	});
 
 	var loader = new THREE.ObjectLoader();
 	loader.load("models/lighthouse.js",function ( lighthouse ) {
@@ -100,7 +83,7 @@ function init() {
 	stats.begin();
 
 
-	renderer = new THREE.WebGLRenderer();
+	renderer = new THREE.WebGLRenderer({antialias:true});
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	document.body.appendChild( renderer.domElement );
 
@@ -128,58 +111,56 @@ function init() {
 
 
 	scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2( 0x000000, 0.0002 );
+	scene.fog = new THREE.FogExp2( 0xFFFFFF, 0.0002 );
 
-
-	// spaceshipPivot.add(camera);
 
 	scene.add(lighthouseContainer);	
-	lighthouseContainer.position.y = 420;
-	lighthouseContainer.position.x = 160;
+
+	lighthouseContainer.position.y = 250;
+	lighthouseContainer.position.x = 40;
 	lighthouseContainer.position.z = 50;
 
-
-
-
-	cartoonTrees.rotation.z = Math.PI/10;
-	cartoonTrees.rotation.y = -Math.PI/3;
-
-
-	cloud.rotation.z = Math.PI/10;
-	cloud.rotation.y = -Math.PI/3;
-	cloud.position.x = 00;
-	cloud.position.y = 400;
-
-
-	// cartoonTrees.position.x = 100;
-	// cartoonTrees.position.y = 240;
-	// cartoonTrees.position.z = -200;
-
+	lighthouseContainer.rotation.y = 20 * Math.PI / 180;
 
 
 	scene.add(cartoonTrees);
-	scene.add(cloud);
+
+	cartoonTrees.rotation.z = Math.PI/10;
+	cartoonTrees.rotation.y = -Math.PI/3;
+	cartoonTrees.position.x = 100;
+	cartoonTrees.position.y = 240;
+	cartoonTrees.position.z = -200;
 
 
-	// LIGHT
-	var light = new THREE.SpotLight(0x999999, 1);
-    	light.castShadow = true;
-    	light.shadowDarkness = .3;
-    	light.position.set(0, 530, 0);
+
+
+		centralLight = new THREE.PointLight(0xffff66, 1000, 0);
+    	centralLight.castShadow = true;
+    	centralLight.shadowDarkness = .3;
+    	centralLight.position.set(40, 615, 50);
+		scene.add(new THREE.PointLightHelper(centralLight, 3));
+    	scene.add(centralLight);
+
+
+	// var bluePoint = new THREE.PointLight(0x003fff, 3, 1500);
+ //    	bluePoint.castShadow = true;
+ //    	bluePoint.shadowDarkness = .9;
+ //    	bluePoint.position.set(40, 615, 50);
+ //    	scene.add(bluePoint);
+
+
+    var light = new THREE.PointLight(0xffffff, 0.1);
+    	light.position.set(400, 400, 0);
     	scene.add(light);
-
-    var light = new THREE.PointLight(0x999999, .6);
-    	light.position.set(500, 400, 0);
-    	scene.add(light);
+		// scene.add(new THREE.PointLightHelper(light, 100));
 
   
 
- 	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.4 );
+ 	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.1 );
 	hemiLight.color.setHSL( 0.6, 1, 0.6 );
 	hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
 	hemiLight.position.set( 0, 500, 0 );
 	scene.add( hemiLight );
-
 
 
 
@@ -189,6 +170,10 @@ function init() {
 	var uniforms = {
 		topColor: 	 { type: "c", value: new THREE.Color( 0x0077ff ) },
 		bottomColor: { type: "c", value: new THREE.Color( 0xffffff ) },
+
+		// topColor: 	 { type: "c", value: new THREE.Color( 0x000000 ) },
+		// bottomColor: { type: "c", value: new THREE.Color( 0x000000 ) },
+
 		offset:		 { type: "f", value: 33 },
 		exponent:	 { type: "f", value: 0.6 }
 	}
@@ -201,7 +186,6 @@ function init() {
 
 	var sky = new THREE.Mesh( skyGeo, skyMat );
 	scene.add( sky );
-
 
 
 	//LOADING HEIGHTMAP
@@ -231,7 +215,7 @@ function init() {
 	        var all = pix[i]+pix[i+1]+pix[i+2];
 	        data[j++] = all/(12*scale);
 	    }
-	     
+
 	    return data;
 	}
 
@@ -244,7 +228,6 @@ function init() {
 	  
 	    // plane
 	    var mountainGeometry = new THREE.PlaneGeometry(13000,13000,31,31);
-	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
 		var colorBrown = new THREE.Color("rgb(73,49,28)");
 
        	var mountainMaterial = new THREE.MeshPhongMaterial({
@@ -278,7 +261,6 @@ function init() {
 	  
 	    // plane
 	    var mountainGeometry2 = new THREE.PlaneGeometry(13000,13000,31,31);
-	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
 		var colorWhite = new THREE.Color("rgb(255,255,255)");
 
        	var mountainMaterial2 = new THREE.MeshPhongMaterial({
@@ -286,7 +268,6 @@ function init() {
        	    wireframe: false,
        	    color: colorWhite,
        	    depthTest: true
-
        	    // map: groundTexture
        	    // emissive: 0xffffff
        	});
@@ -300,7 +281,6 @@ function init() {
 
 	    mountainMesh2 = new THREE.Mesh( mountainGeometry2, mountainMaterial2 );
 	  	 
-
 		mountainMesh2.position.y = -1600;
 		mountainMesh2.position.z = -100;
 	 
@@ -323,8 +303,6 @@ function init() {
 	    // plane
 	    var groundGeometry = new THREE.PlaneGeometry(900,900,31,31);
 		var colorBrown = new THREE.Color("rgb(88,66,43)");
-	    var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
-
        	var groundMaterial = new THREE.MeshPhongMaterial({
        		shading: THREE.FlatShading,
        	    wireframe: false,
@@ -348,17 +326,18 @@ function init() {
 	    scene.add(groundMesh);
 
 
-	    var data = getHeightData(islandHeightmap,0.18);
+	    var data = getHeightData(islandHeightmap,0.14);
 	  
 	    // plane
-	    var groundGeometry2 = new THREE.PlaneGeometry(760,760,31,31);
+	    var groundGeometry2 = new THREE.PlaneGeometry(800,800,31,31);
 	    var colorWhite = new THREE.Color( 1, 1, 1 );
 	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
 
        	var groundMaterial2 = new THREE.MeshPhongMaterial({
        		shading: THREE.FlatShading,
        	    wireframe: false,
-       	    color: colorWhite
+       	    color: colorWhite,
+       	    depthTest: true
        	    // map: groundTexture
        	    // emissive: 0xffffff
        	});
@@ -374,13 +353,11 @@ function init() {
 	  
 		groundMesh2.receiveShadow = true;
 
-		groundMesh2.position.y = 60;
+		groundMesh2.position.y = 0;
 		groundMesh2.position.z = -10;
 
-	 
 	 	// groundMesh2.rotation.y = Math.PI / 180 * (-2);
 	 	// groundMesh2.rotation.z = Math.PI / 180 * (2);
-
 
 		groundMesh2.rotation.x = Math.PI / 180 * (-90);
 	    scene.add(groundMesh2);
@@ -398,10 +375,9 @@ function init() {
 		shading: THREE.FlatShading,
 		color: colorBlue,
 		specular: 0x0077ff, 
-		shininess: 30,
+		shininess: 20,
 		// envMap: refractionCube, 
-        refractionRatio: 0.5,
-        opacity: 0.7,
+        refractionRatio: 0.3
         // transparent: true
 	} );
 
@@ -420,121 +396,6 @@ function init() {
 	seaMesh.rotation.x = Math.PI / 180 * (-90);
 	scene.add(seaMesh);
 
-
-
-	volcanoHeightmap.onload = function () {
-
-	    var data = getHeightData(volcanoHeightmap,0.137);
-        //set height of vertices
-
-
-	    var lavaShape = new THREE.PlaneGeometry(400,400,31,31);
-		var lavaColor = new THREE.Color( "rgb(255,45,32)");
-	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
-
-		var lavaMaterial = new THREE.MeshPhongMaterial( { 
-			wireframe: false,
-			shading: THREE.FlatShading,
-			color: lavaColor,
-			specular: 0x0077ff, 
-			shininess: 30,
-			// envMap: refractionCube, 
-	        refractionRatio: 0.5,
-	        opacity: 1,
-	        // transparent: true
-		} );
-
-		lavaMesh = new THREE.Mesh( lavaShape, lavaMaterial );
-
-		lavaMesh.position.y = 40;
-		lavaMesh.position.x = 00;
-		lavaMesh.rotation.x = Math.PI / 180 * (-90);
-		scene.add(lavaMesh);
-
-	    for ( var i = 0; i<lavaShape.vertices.length; i++ ) {
-	         lavaShape.vertices[i].z = data[i];
-	    }
-
-        lavaShape.computeFaceNormals();
-		lavaMesh.receiveShadow = true;
-}
-
-	volcanoGlowHeightmap.onload = function () {
-
-	    var data = getHeightData(volcanoGlowHeightmap,0.131);
-        //set height of vertices
-
-
-	    var lavaFire = new THREE.PlaneGeometry(400,400,31,31);
-		var lavaGlowColor = new THREE.Color( "rgb(252,166,21)");
-	    // var groundTexture = THREE.ImageUtils.loadTexture( 'images/textures/snow.jpg' );
-
-		var lavaMaterial = new THREE.MeshPhongMaterial( { 
-			wireframe: false,
-			shading: THREE.FlatShading,
-			color: lavaGlowColor,
-			specular: 0x0077ff, 
-			shininess: 30,
-			// envMap: refractionCube, 
-	        refractionRatio: 0.5,
-	        opacity: 1,
-	        // transparent: true
-		} );
-
-		lavaMesh = new THREE.Mesh( lavaFire, lavaMaterial );
-
-		lavaMesh.position.y = 60;
-		lavaMesh.position.x = 00;
-		lavaMesh.rotation.x = Math.PI / 180 * (-90);
-		scene.add(lavaMesh);
-
-	    for ( var i = 0; i<lavaFire.vertices.length; i++ ) {
-	         lavaFire.vertices[i].z = data[i];
-	    }
-
-        lavaFire.computeFaceNormals();
-		lavaMesh.receiveShadow = true;
-}
-
-// 	cloud.onload = function () {
-
-
-// 	    var cloudShape = new THREE.DodecahedronGeometry(200,1);
-// 		var cloudColor = new THREE.Color( "rgb(20,166,245)");
-// 	    // var cloudTexture = THREE.ImageUtils.loadTexture( 'images/cloud.jpg' );
-
-// 		var cloudMaterial = new THREE.MeshPhongMaterial( { 
-// 			wireframe: false,
-// 			shading: THREE.FlatShading,
-// 			color: cloudColor,
-// 			specular: 0x0077ff, 
-// 			shininess: 30,
-// 			// envMap: refractionCube, 
-// 	        refractionRatio: 0.5,
-// 	        opacity: 1,
-// 	        // transparent: true
-// 		} );
-
-// 		cloudMesh = new THREE.Mesh( cloudShape, cloudMaterial );
-
-// 		cloudMesh.position.y = 150;
-// 		cloudMesh.position.x = 00;
-// 		cloudMesh.rotation.x = Math.PI / 180 * (-90);
-// 		scene.add(cloudMesh);
-
-// 	    for ( var i = 0; i<cloudShape.vertices.length; i++ ) {
-// 	         cloudShape.vertices[i].z;
-// 	    }
-
-//         cloudMesh.computeFaceNormals();
-// 		cloudMesh.receiveShadow = true;
-// }
-
-
-
-
-
-
 	var numParticles = 20000,
 		snowWidth = 4000,
 		snowHeight = 5000,
@@ -545,10 +406,10 @@ function init() {
 			height: 5000,
 			radiusX: 10.5,
 			radiusZ: 10.5,
-			size: 3000,
-			scale: 4.0,
-			opacity: 1,
-			speedH: 1.0,
+			size: window.innerWidth*3,
+			scale: 1.0,
+			opacity: 0.4,
+			speedH: 1.5,
 			speedV: 5.0
 		},
 
@@ -588,17 +449,16 @@ function init() {
 	particleSystem = new THREE.PointCloud( systemGeometry, systemMaterial );
 	particleSystem.position.y = -snowHeight/2;
 
+
 	scene.add( particleSystem );
 
 	clock = new THREE.Clock();
-
 }
 
 
 function animate() {
 
 	requestAnimationFrame( animate );
-
 
 	// var myo = Myo.create(0);
 
@@ -646,9 +506,8 @@ function animate() {
 
 
 	camera.position.x = 800*Math.cos(theta*4) + 0;
-	camera.position.y = 400*Math.sin(theta*2) + 600;
+	camera.position.y = 400*Math.sin(theta*2) + 800;
  	camera.position.z = 800*Math.sin(theta*4) + 0;
-
 	camera.lookAt( lighthouseContainer.position );
 
 
@@ -657,12 +516,11 @@ function animate() {
 	    seaMesh.geometry.dynamic = true;
 	    
 	    // seaMesh.geometry.vertices[i].z =  seaMesh.geometry.vertices[i].z + sinWave;
-	    var sinWave;
 
 	    	// this controls the height
 
-	    	seaMesh.geometry.vertices[i].z  = sinWave * i/40; 
-	    	seaMesh.geometry.vertices[i+3].z = sinWave * -i/40; 
+	    	seaMesh.geometry.vertices[i].z  = sinWave * i*weatherData.wind.speed/400; 
+	    	seaMesh.geometry.vertices[i+3].z = sinWave * -i*weatherData.wind.speed/400; 
 
 			// this controls the speed of the wave going up and down
 	    	sinWave= Math.sin(gravity/30);
@@ -671,6 +529,11 @@ function animate() {
 	}
 
 	// seaMesh.geometry.computeFaceNormals();
+	sinWave= Math.sin(gravity/50);
+
+
+	centralLight.intensity = 1 + sinWave;
+	centralLight.distance = 300;
 
 
 	cameraAngle = cameraAngle + 0.05;
@@ -684,11 +547,15 @@ function animate() {
 
     // stats.end();
 
-
 	var delta = clock.getDelta(),
 		elapsedTime = clock.getElapsedTime();
 		particleSystem.material.uniforms.elapsedTime.value = elapsedTime * 10;
 
+
+	// UPDATES PARAMETERS ONLY IF WEATHER DATA IS STORED
+	if(weatherData.name) {		
+		// console.log(weatherInfo.name);
+	}
 
     // controls.update();    
 
@@ -699,10 +566,35 @@ function animate() {
 function render() {
 
 	var time = Date.now() * 0.001;
-
 	renderer.render( scene, camera );
-
 }
+
+function updateWeather() {
+
+	$.ajax({
+
+	    type: 'GET',
+	    url: weatherUrl,
+	    async: false,
+	    contentType: "application/json",
+	    dataType: 'jsonp',
+	    success: function(json) {
+			window.weatherData = json;
+	    },
+	    error: function(e) {
+	       console.log(e.message);
+	    }
+	}).done(function() { 
+
+		// setTimeout(updateWeather, 600000);
+
+		init();
+		animate();
+
+		$("#overlay").fadeOut( "slow" ).delay(1000);
+	});
+}
+
 
 function rand( v ) {
 	return (v * (Math.random() - 0.5));
